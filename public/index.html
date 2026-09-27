@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ThriftThreads - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h2>ThriftThreads</h2>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="store.html">Store</a>
+            <a href="sell.html">Sell</a>
+            <a href="cart.html">Cart</a>
+            <span id="auth-links" class="auth-group">
+                <a href="login.html" class="btn-outline">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up</a>
+            </span>
+            <span id="user-links" class="user-group hidden">
+                <span id="greeting" style="margin-right: 15px;"></span>
+                <button id="logout-btn" class="btn-outline">Logout</button>
+            </span>
+        </div>
+    </header>
+
+    <main class="home-main">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-container">
+
+                <!-- Text Column -->
+                <div class="hero-text-col">
+                    <div class="hero-subtitle">SUSTAINABLE FASHION</div>
+                    <h1 class="hero-title">Give Clothes a<br>Second Life</h1>
+                    <p class="hero-description">
+                        Shop curated pre-loved fashion at ThriftThreads.in. Every purchase reduces waste and supports a
+                        greener planet.
+                    </p>
+                    <a href="store.html" class="hero-shop-btn">Shop Now</a>
+                </div>
+
+                <!-- Image Column -->
+                <div class="hero-img-col">
+                    <img src="https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?auto=format&fit=crop&q=80&w=500&h=600"
+                        alt="Fashion Model" class="hero-img">
+                </div>
+            </div>
+        </section>
+
+        <section class="features-section">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">&#127811;</div>
+                    <h4 class="feature-title">Eco-Friendly</h4>
+                    <p class="feature-desc">Reduce fashion waste by choosing pre-loved items</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">&#9851;</div>
+                    <h4 class="feature-title">Quality Checked</h4>
+                    <p class="feature-desc">Every item is inspected and graded for condition</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">&#128151;</div>
+                    <h4 class="feature-title">Affordable Style</h4>
+                    <p class="feature-desc">Designer brands at a fraction of the original price</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+                var currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            var user = JSON.parse(currentUser);
+            var authLinks = document.getElementById('auth-links');
+            if (authLinks) authLinks.classList.add('hidden');
+
+            var userLinks = document.getElementById('user-links');
+            if (userLinks) userLinks.classList.remove('hidden');
+
+            var greeting = document.getElementById('greeting');
+            if (greeting) greeting.innerText = 'Hello, ' + user.name + '!';
+        }
+
+        var logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function (e) {
+                e.preventDefault();
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            };
+        }
+    </script>
+</body>
+
+</html>

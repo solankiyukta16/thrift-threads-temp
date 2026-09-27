@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ThriftThreads - Sell Item</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h2>ThriftThreads</h2>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="store.html">Store</a>
+            <a href="sell.html">Sell</a>
+            <a href="cart.html">Cart</a>
+            <span id="auth-links" class="auth-group">
+                <a href="login.html" class="btn-outline">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up</a>
+            </span>
+            <span id="user-links" class="user-group hidden">
+                <span id="greeting" style="margin-right: 15px;"></span>
+                <button id="logout-btn" class="btn-outline">Logout</button>
+            </span>
+        </div>
+    </header>
+
+    <div class="sell-container">
+        <h3>Sell Your Item</h3>
+        <p class="text-center text-muted">List your gently used clothing for others to buy.</p>
+
+        <form id="sell-form" onsubmit="handleSell(event)">
+            <label>Item Name:</label><br>
+            <input type="text" id="itemName" required placeholder="e.g. Vintage Leather Jacket"
+                class="form-input-full"><br>
+
+            <label>Category:</label><br>
+            <select id="itemCategory" class="form-input-full">
+                <option value="tops">Tops & Shirts</option>
+                <option value="bottoms">Bottoms</option>
+                <option value="outerwear">Outerwear</option>
+                <option value="accessories">Accessories</option>
+            </select><br>
+
+            <label>Price (₹):</label><br>
+            <input type="number" id="itemPrice" required min="1" placeholder="e.g. 25" class="form-input-full"><br>
+
+            <label>Description:</label><br>
+            <textarea id="itemDesc" required rows="4" class="form-input-full"></textarea><br>
+
+            <label>Image URL (Optional):</label><br>
+            <input type="url" id="itemImage" placeholder="https://..." class="form-input-full"><br>
+
+            <button type="submit" class="btn-full">List
+                Item</button>
+        </form>
+
+        <div id="success-msg" class="text-center mt-20 hidden">
+            <p class="text-success">Item listed successfully!</p>
+            <button onclick="window.location.href='store.html'" class="btn-outline">Go to Store</button>
+        </div>
+    </div>
+
+    <!-- Very Simple JS -->
+    <script>
+        // Copy the header auth logic to ensure navbar is correct
+                var currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            var user = JSON.parse(currentUser);
+            var authLinks = document.getElementById('auth-links');
+            if (authLinks) authLinks.classList.add('hidden');
+
+            var userLinks = document.getElementById('user-links');
+            if (userLinks) userLinks.classList.remove('hidden');
+
+            var greeting = document.getElementById('greeting');
+            if (greeting) greeting.innerText = 'Hello, ' + user.name + '!';
+        }
+
+        var logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function (e) {
+                e.preventDefault();
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            };
+        }
+
+        // Sell logic
+        async function handleSell(event) {
+            event.preventDefault(); // Stop page reload
+
+            if (!currentUser) {
+                alert("Please login to sell an item.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                var response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('itemName').value,
+                        category: document.getElementById('itemCategory').value,
+                        price: document.getElementById('itemPrice').value,
+                        description: document.getElementById('itemDesc').value,
+                        image: document.getElementById('itemImage').value,
+                        seller_id: JSON.parse(currentUser).id
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('sell-form').style.display = 'none';
+                    document.getElementById('success-msg').style.display = 'block';
+                } else {
+                    alert("Error saving item to database.");
+                }
+            } catch (e) {
+                alert("Server error. Is node running?");
+            }
+        }
+    </script>
+</body>
+
+</html>

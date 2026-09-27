@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ThriftThreads - Product Details</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h2>ThriftThreads</h2>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="store.html">Store</a>
+            <a href="sell.html">Sell</a>
+            <a href="cart.html">Cart</a>
+            <span id="auth-links" class="auth-group">
+                <a href="login.html" class="btn-outline">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up</a>
+            </span>
+            <span id="user-links" class="user-group hidden">
+                <span id="greeting" style="margin-right: 15px;"></span>
+                <button id="logout-btn" class="btn-outline">Logout</button>
+            </span>
+        </div>
+    </header>
+
+    <div class="product-detail-container">
+        <a href="store.html"
+            class="back-link">&larr; Back to
+            Store</a>
+
+        <div class="product-detail-layout" id="product-detail">
+            <!-- Loaded via JS -->
+            <p>Loading product...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadProduct() {
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('id');
+
+            if (!id) {
+                document.getElementById('product-detail').innerHTML = "<p>Product not found.</p>";
+                return;
+            }
+
+            try {
+                var response = await fetch('/api/products/' + id);
+                if (!response.ok) throw new Error("Not found");
+                var p = await response.json();
+
+                var imageHTML = p.image
+                    ? '<img src="' + p.image + '" alt="' + p.name + '" class="product-detail-hero-img">'
+                    : '<div class="no-image-fallback no-image-product">No Image</div>';
+
+                var html = `
+                <div class="product-detail-image" class="product-detail-hero-col1">
+                    ` + imageHTML + `
+                </div>
+                <div class="product-detail-info" class="product-detail-hero-col2">
+                    <h2 class="product-detail-hero-title">` + p.name + `</h2>
+                    <div class="product-category" class="product-detail-hero-cat">Category: <span >` + p.category + `</span></div>
+                    <div class="product-detail-price" class="product-detail-hero-price">₹` + parseFloat(p.price).toFixed(2) + `</div>
+                    <div class="product-description" class="product-detail-hero-desc">
+                        <p>` + (p.description || "No description provided.") + `</p>
+                    </div>
+                    <button
+                        onclick="addToCart('` + p.name.replace(/'/g, "\\'") + `', ` + p.price + `, '` + p.image + `')"
+                        class="product-detail-hero-btn">Add to Cart</button>
+                </div>
+                `;
+
+                document.getElementById('product-detail').innerHTML = html;
+            } catch (e) {
+                document.getElementById('product-detail').innerHTML = "<p>Product not found.</p>";
+            }
+        }
+
+        loadProduct();
+
+        function addToCart(name, price, image) {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            var found = false;
+            for (var i = 0; i < cart.length; i++) {
+                if (cart[i].name === name) {
+                    cart[i].qty += 1;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                cart.push({ name: name, price: price, image: image, qty: 1 });
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert(name + " added to cart!");
+        }
+
+                var currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            var user = JSON.parse(currentUser);
+            var authLinks = document.getElementById('auth-links');
+            if (authLinks) authLinks.classList.add('hidden');
+
+            var userLinks = document.getElementById('user-links');
+            if (userLinks) userLinks.classList.remove('hidden');
+
+            var greeting = document.getElementById('greeting');
+            if (greeting) greeting.innerText = 'Hello, ' + user.name + '!';
+        }
+
+        var logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function (e) {
+                e.preventDefault();
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            };
+        }
+    </script>
+</body>
+
+</html>

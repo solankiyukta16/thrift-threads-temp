@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ThriftThreads - Store</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h2>ThriftThreads</h2>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="store.html">Store</a>
+            <a href="sell.html">Sell</a>
+            <a href="cart.html">Cart</a>
+            <span id="auth-links" class="auth-group">
+                <a href="login.html" class="btn-outline">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up</a>
+            </span>
+            <span id="user-links" class="user-group hidden">
+                <span id="greeting" style="margin-right: 15px;"></span>
+                <button id="logout-btn" class="btn-outline">Logout</button>
+            </span>
+        </div>
+    </header>
+
+    <div class="store-container">
+        <!-- Sidebar Filters -->
+        <div class="store-filters">
+            <h4>Filters</h4>
+            <label>Search:</label><br>
+            <input type="text" id="searchBox" onkeyup="filterStore()" placeholder="Search..."><br><br>
+
+            <label>Category:</label><br>
+            <select id="categoryBox" onchange="filterStore()">
+                <option value="all">All</option>
+                <option value="tops">Tops & Shirts</option>
+                <option value="bottoms">Bottoms</option>
+                <option value="outerwear">Outerwear</option>
+                <option value="accessories">Accessories</option>
+            </select>
+        </div>
+
+        <!-- Product List -->
+        <div class="store-main">
+            <div class="product-grid" id="product-grid-container">
+                <p>Loading products from database...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadProducts() {
+            try {
+                var response = await fetch('/api/products');
+                var products = await response.json();
+
+                var grid = document.getElementById('product-grid-container');
+                var html = "";
+
+                for (var i = 0; i < products.length; i++) {
+                    var p = products[i];
+                    var imageHTML = p.image
+                        ? '<img src="' + p.image + '" class="product-image">'
+                        : '<div class="product-image no-image-fallback">No Image</div>';
+
+                    // Check ownership
+                    var currentUserStr = localStorage.getItem('currentUser');
+                    var currentUserId = null;
+                    if (currentUserStr) {
+                        currentUserId = JSON.parse(currentUserStr).id;
+                    }
+
+                    var deleteBtn = (currentUserId === p.seller_id)
+                        ? `<button class="btn-outline btn-danger-outline btn-flex-1" onclick="deleteProduct(` + p.id + `)">Delete</button>`
+                        : '';
+
+                    html += `
+                    <div class="product-card" data-category="` + p.category + `">
+                        ` + imageHTML + `
+                        <div class="product-info">
+                            <h4>` + p.name + `</h4>
+                            <p class="product-price">₹` + parseFloat(p.price).toFixed(2) + `</p>
+                            <div class="product-actions-group">
+                                <a href="product.html?id=` + p.id + `" class="btn-flex-1"><button class="btn-outline w-100">Details</button></a>
+                                <button class="btn-primary btn-flex-1" onclick="addToCart('` + p.name.replace(/'/g, "\\'") + `', ` + p.price + `, '` + p.image + `')">Add to Cart</button>
+                                ` + deleteBtn + `
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+
+                if (products.length === 0) {
+                    html = "<p>No products available yet. Go to the Sell page to add some!</p>";
+                }
+
+                grid.innerHTML = html;
+            } catch (e) {
+                document.getElementById('product-grid-container').innerHTML = '<p class="text-error">Could not connect to database. Did you start node server.js?</p>';
+            }
+        }
+
+        loadProducts();
+
+        function filterStore() {
+            var search = document.getElementById('searchBox').value.toLowerCase();
+            var category = document.getElementById('categoryBox').value;
+            var products = document.getElementsByClassName('product-card');
+
+            for (var i = 0; i < products.length; i++) {
+                var title = products[i].getElementsByTagName('h4')[0].innerText.toLowerCase();
+                var prodCategory = products[i].getAttribute('data-category');
+
+                var matchesSearch = title.includes(search);
+                var matchesCategory = (category === 'all' || prodCategory === category);
+
+                if (matchesSearch && matchesCategory) {
+                    products[i].style.display = 'flex';
+                } else {
+                    products[i].style.display = 'none';
+                }
+            }
+        }
+
+        function addToCart(name, price, image) {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            var itemFound = false;
+            for (var i = 0; i < cart.length; i++) {
+                if (cart[i].name === name) {
+                    cart[i].qty += 1;
+                    itemFound = true;
+                    break;
+                }
+            }
+
+            if (!itemFound) {
+                cart.push({ name: name, price: price, image: image, qty: 1 });
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert(name + " added to cart!");
+        }
+
+                var currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            var user = JSON.parse(currentUser);
+            var authLinks = document.getElementById('auth-links');
+            if (authLinks) authLinks.classList.add('hidden');
+
+            var userLinks = document.getElementById('user-links');
+            if (userLinks) userLinks.classList.remove('hidden');
+
+            var greeting = document.getElementById('greeting');
+            if (greeting) greeting.innerText = 'Hello, ' + user.name + '!';
+        }
+
+        var logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function (e) {
+                e.preventDefault();
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            };
+        }
+
+        async function deleteProduct(id) {
+            if (confirm("Are you sure you want to permanently delete this listing?")) {
+                try {
+                    await fetch('/api/products/' + id, { method: 'DELETE' });
+                    window.location.reload();
+                } catch (e) {
+                    alert("Error deleting product.");
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

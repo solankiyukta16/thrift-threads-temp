@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ThriftThreads - Cart</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h2>ThriftThreads</h2>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="store.html">Store</a>
+            <a href="sell.html">Sell</a>
+            <a href="cart.html">Cart</a>
+            <span id="auth-links" class="auth-group">
+                <a href="login.html" class="btn-outline">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up</a>
+            </span>
+            <span id="user-links" class="user-group hidden">
+                <span id="greeting" style="margin-right: 15px;"></span>
+                <button id="logout-btn" class="btn-outline">Logout</button>
+            </span>
+        </div>
+    </header>
+
+    <div class="cart-container">
+        <h3>Your Shopping Cart</h3>
+        <div class="cart-layout">
+
+            <!-- Items Container -->
+            <div class="cart-items" id="cart-items">
+                <!-- Javascript will load rows here -->
+            </div>
+
+            <!-- Summary -->
+            <div class="cart-summary">
+                <h4>Order Summary</h4>
+                <div class="summary-line">
+                    <span>Total:</span>
+                    <span id="final-total">₹0.00</span>
+                </div>
+                <button class="checkout-btn" onclick="processCheckout()">Checkout</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Order Success Modal -->
+    <div id="order-success-modal" class="modal-backdrop hidden">
+        <div class="modal-content text-center">
+            <div class="modal-icon text-success">&#10004;</div>
+            <h3 class="modal-title">Order Placed Successfully!</h3>
+            <p class="text-muted">Thank you for shopping at ThriftThreads. Your sustainable fashion choices make a
+                difference.</p>
+            <button class="btn-primary w-100 mt-20" onclick="window.location.href='store.html'">Continue
+                Shopping</button>
+        </div>
+    </div>
+
+    <script>
+        function loadCart() {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            var container = document.getElementById('cart-items');
+            var total = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-muted">Your cart is empty.</p>';
+                document.getElementById('final-total').innerText = "₹0.00";
+                return;
+            }
+
+            var html = "";
+            for (var i = 0; i < cart.length; i++) {
+                var item = cart[i];
+                var itemTotal = item.price * item.qty;
+                total += itemTotal;
+
+                var imageHTML = item.image
+                    ? '<img src="' + item.image + '" class="cart-item-img">'
+                    : '<div class="cart-item-img no-image-fallback no-image-cart">No Image</div>';
+
+                html += `
+                <div class="cart-item">
+                    ` + imageHTML + `
+                    <div class="cart-item-info">
+                        <h4 class="cart-item-title">` + item.name + `</h4>
+                        <p class="cart-item-price">₹` + item.price.toFixed(2) + `</p>
+                    </div>
+                    <div class="cart-item-actions">
+                        <input type="number" value="` + item.qty + `" min="1" onchange="updateQty(` + i + `, this.value)" class="qty-box qty-box-inner">
+                        <p class="item-price-val hidden">` + item.price + `</p>
+                        <button class="remove-btn" onclick="removeItem(` + i + `)">Remove</button>
+                    </div>
+                </div>
+                `;
+            }
+
+            container.innerHTML = html;
+            document.getElementById('final-total').innerText = "₹" + total.toFixed(2);
+        }
+
+        function updateQty(index, newQty) {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart[index].qty = parseInt(newQty);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            loadCart(); // Redraw UI
+        }
+
+        function removeItem(index) {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            loadCart(); // Redraw UI
+        }
+
+        // Render when page opens
+        loadCart();
+
+                var currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            var user = JSON.parse(currentUser);
+            var authLinks = document.getElementById('auth-links');
+            if (authLinks) authLinks.classList.add('hidden');
+
+            var userLinks = document.getElementById('user-links');
+            if (userLinks) userLinks.classList.remove('hidden');
+
+            var greeting = document.getElementById('greeting');
+            if (greeting) greeting.innerText = 'Hello, ' + user.name + '!';
+        }
+
+        var logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function (e) {
+                e.preventDefault();
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            };
+        }
+
+        function processCheckout() {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            if (cart.length === 0) {
+                alert("Your cart is empty!");
+                return;
+            }
+
+            var currentUserStr = localStorage.getItem('currentUser');
+            if (!currentUserStr) {
+                alert("Please log in to place an order.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            // Clear cart
+            localStorage.setItem('cart', JSON.stringify([]));
+
+            // Reload UI to show empty state behind modal
+            loadCart();
+
+            // Show the modal
+            document.getElementById('order-success-modal').classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>
